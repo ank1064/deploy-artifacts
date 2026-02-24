@@ -1,0 +1,90 @@
+# =============================================================================
+# Sample values.yaml for Bitnami-based Helm deployment
+# =============================================================================
+# Add Bitnami repo first: helm repo add bitnami https://charts.bitnami.com/bitnami
+# Update deps: helm dependency update
+# Install: helm install my-release . -f values.yaml
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Redis (Bitnami subchart) - https://github.com/bitnami/charts/tree/main/bitnami/redis
+# -----------------------------------------------------------------------------
+redis:
+  enabled: true
+
+  # Architecture: standalone or replication
+  architecture: standalone
+
+  # Authentication
+  auth:
+    enabled: true
+    existingSecret: ""           # Use existing secret name, or leave empty to auto-create
+    existingSecretPasswordKey: "" # Key in secret for redis-password
+    password: ""                 # Set for dev; use --set or secret in prod
+
+  # Master configuration
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    podSecurityContext:
+      enabled: true
+      fsGroup: 1001
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
+      runAsNonRoot: true
+    service:
+      type: ClusterIP
+      port: 6379
+
+  # Replica (when architecture: replication)
+  replica:
+    replicaCount: 1
+    persistence:
+      enabled: true
+      size: 8Gi
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+
+  # Metrics (Prometheus)
+  metrics:
+    enabled: false
+    serviceMonitor:
+      enabled: false
+
+  # Common settings
+  commonConfiguration: |-
+    # Enable AOF persistence
+    appendonly yes
+    maxmemory-policy noeviction
+
+  # Use existing PVC (optional)
+  # master:
+  #   persistence:
+  #     existingClaim: my-redis-pvc
+
+# -----------------------------------------------------------------------------
+# Add more Bitnami chart dependencies in Chart.yaml and override here, e.g.:
+# -----------------------------------------------------------------------------
+# mongodb:
+#   enabled: true
+#   auth:
+#     rootPassword: ""
+#   persistence:
+#     size: 10Gi
+#
+# nginx:
+#   enabled: true
+#   replicaCount: 2
+#   service:
+#     type: LoadBalancer
